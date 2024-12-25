@@ -6,6 +6,7 @@ import Word from "./models/Word.js";
 import {
   generateQuizQuestion,
   generateWordInfo,
+  generateRandomWord,
 } from "./services/geminiService.js";
 import {
   formatProfile,
@@ -57,17 +58,12 @@ Available commands:
 bot.command("new_word", async (ctx) => {
   try {
     const user = await User.findOne({ telegramId: ctx.from.id });
-    const wordList = [
-      "efficient",
-      "implement",
-      "negotiate",
-      "collaborate",
-      "deadline",
-      "initiative",
-      "objective",
-      "strategy",
-    ];
-    const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+    // Retrieve the list of learned words
+    const learnedWords = await Word.find({ _id: { $in: user.wordsLearned } }).select('word');
+
+    // Use geminiService to generate a random word, excluding learned words
+    const randomWord = await generateRandomWord(learnedWords.map(w => w.word));
 
     const wordInfo = await generateWordInfo(randomWord);
     const word = await Word.findOneAndUpdate(

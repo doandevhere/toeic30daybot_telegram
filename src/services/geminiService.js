@@ -56,3 +56,18 @@ export async function generateQuizQuestion(word, definition) {
     throw error;
   }
 }
+
+export async function generateRandomWord(learnedWords = []) {
+  const prompt = `Generate a random English word suitable for TOEIC preparation that is not in the following list: ${learnedWords.join(", ")}. Only provide the word, not an explanation.`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text().trim();
+    // Assuming the response is a simple word, not JSON
+    return text;
+  } catch (error) {
+    console.error("Error generating random word:", error);
+    throw error;
+  }
+}
