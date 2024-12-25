@@ -1,0 +1,28 @@
+{
+  "name": "toeic30daybot",
+  "version": "1.0.0",
+  "description": "This repository contains a Telegram bot designed to assist users in learning new TOEIC vocabulary effectively. The bot leverages AI to provide engaging and interactive vocabulary learning experiences.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "english",
+    "toeic",
+    "vocabulary",
+    "gemini"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.2",
+    "nodemon": "^3.1.9",
+    "telegraf": "^4.16.3"
+  }
+}
