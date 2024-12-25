@@ -39,8 +39,9 @@
    Create a `.env` file and add your Telegram bot token and MongoDB connection string:
 
    ```env
-   TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-   MONGODB_URI=your-mongodb-connection-string
+   TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+   MONGODB_URI=your_mongodb_connection_string
+   GEMINI_API_KEY=your_gemini_api_key
    ```
 
 4. Start the bot:
