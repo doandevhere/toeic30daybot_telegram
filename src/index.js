@@ -77,7 +77,11 @@ bot.command("new_word", async (ctx) => {
       learnedWords.map((w) => w.word)
     );
 
+    console.log("randomWord", randomWord);
+    console.log("learnedWords", learnedWords);
+
     const wordInfo = await generateWordInfo(randomWord);
+    console.log("wordInfo", wordInfo);
     const word = await Word.findOneAndUpdate(
       { word: wordInfo.word.toLowerCase() },
       wordInfo,
