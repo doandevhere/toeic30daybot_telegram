@@ -1,12 +1,13 @@
 import dotenv from "dotenv";
+import express from "express";
 import mongoose from "mongoose";
 import { Telegraf } from "telegraf";
 import User from "./models/User.js";
 import Word from "./models/Word.js";
 import {
   generateQuizQuestion,
-  generateWordInfo,
   generateRandomWord,
+  generateWordInfo,
 } from "./services/geminiService.js";
 import {
   formatProfile,
@@ -16,6 +17,13 @@ import {
 } from "./utils/formatters.js";
 
 dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("TOEIC Bot Server is running!");
+});
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
@@ -60,10 +68,14 @@ bot.command("new_word", async (ctx) => {
     const user = await User.findOne({ telegramId: ctx.from.id });
 
     // Retrieve the list of learned words
-    const learnedWords = await Word.find({ _id: { $in: user.wordsLearned } }).select('word');
+    const learnedWords = await Word.find({
+      _id: { $in: user.wordsLearned },
+    }).select("word");
 
     // Use geminiService to generate a random word, excluding learned words
-    const randomWord = await generateRandomWord(learnedWords.map(w => w.word));
+    const randomWord = await generateRandomWord(
+      learnedWords.map((w) => w.word)
+    );
 
     const wordInfo = await generateWordInfo(randomWord);
     const word = await Word.findOneAndUpdate(
@@ -171,12 +183,23 @@ bot.catch((err, ctx) => {
   ctx.reply("An error occurred. Please try again later.");
 });
 
-// Start the bot
-bot
-  .launch()
-  .then(() => console.log("Bot is running"))
-  .catch((err) => console.error("Bot launch error:", err));
+// Start the express server and bot
+Promise.all([
+  new Promise((resolve) =>
+    app.listen(port, () => {
+      console.log(`Express server is running on port ${port}`);
+      resolve();
+    })
+  ),
+  bot.launch().then(() => console.log("Bot is running")),
+]).catch((err) => console.error("Startup error:", err));
 
 // Enable graceful stop
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+process.once("SIGINT", () => {
+  bot.stop("SIGINT");
+  process.exit(0);
+});
+process.once("SIGTERM", () => {
+  bot.stop("SIGTERM");
+  process.exit(0);
+});
