@@ -4,7 +4,11 @@ const wordSchema = new mongoose.Schema({
   word: {
     type: String,
     required: true,
-    unique: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
   definition: {
     type: String,
@@ -30,5 +34,8 @@ const wordSchema = new mongoose.Schema({
 });
 
 const Word = mongoose.model("Word", wordSchema);
+
+// Add compound index for word and userId
+wordSchema.index({ word: 1, userId: 1 }, { unique: true });
 
 export default Word;
