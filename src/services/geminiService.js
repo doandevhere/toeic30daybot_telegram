@@ -58,7 +58,9 @@ export async function generateQuizQuestion(word, definition) {
 }
 
 export async function generateRandomWord(learnedWords = []) {
-  const prompt = `Generate a random English word suitable for TOEIC preparation that is not in the following list: ${learnedWords.join(", ")}. Only provide the word, not an explanation.`;
+  const prompt = `Generate a random English word suitable for TOEIC preparation that is not in the following list: ${learnedWords.join(
+    ", "
+  )}. Only provide the word, not an explanation.`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -68,6 +70,35 @@ export async function generateRandomWord(learnedWords = []) {
     return text;
   } catch (error) {
     console.error("Error generating random word:", error);
+    throw error;
+  }
+}
+
+export async function analyzeWordPairs(textContent) {
+  const prompt = `Analyze this text content and identify important English word pairs that are useful for TOEIC preparation. Return the results in this JSON format:
+  {
+    "wordPairs": [
+      {
+        "pair": "word1 word2",
+        "definition": "clear and concise definition",
+        "vietnameseDefinition": "Vietnamese translation",
+        "example": "example sentence using the pair",
+        "vietnameseExample": "Vietnamese translation of example"
+      }
+    ]
+  }
+  
+  Text content: ${textContent}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    // Remove markdown code block if present
+    text = text.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Error analyzing word pairs:", error);
     throw error;
   }
 }

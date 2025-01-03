@@ -1,3 +1,4 @@
+import axios from "axios";
 import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
@@ -5,6 +6,7 @@ import { Telegraf } from "telegraf";
 import User from "./models/User.js";
 import Word from "./models/Word.js";
 import {
+  analyzeWordPairs,
   generateQuizQuestion,
   generateRandomWord,
   generateWordInfo,
@@ -14,6 +16,7 @@ import {
   formatQuiz,
   formatWordInfo,
   formatWordList,
+  formatWordPairs,
 } from "./utils/formatters.js";
 
 dotenv.config();
@@ -58,6 +61,7 @@ Available commands:
 • /lookup \\<word\\> \\- Look up any English word
 • /my\\_profile \\- View your learning statistics
 • /word\\_list \\- See all words you've learned
+• /news\\- Get 5 to 10 word pairs from the article url
 `;
   await ctx.replyWithMarkdownV2(message);
 });
@@ -83,8 +87,8 @@ bot.command("new_word", async (ctx) => {
     const wordInfo = await generateWordInfo(randomWord);
     console.log("wordInfo", wordInfo);
     const word = await Word.findOneAndUpdate(
-      { word: wordInfo.word.toLowerCase() },
-      wordInfo,
+      { word: wordInfo.word.toLowerCase(), userId: user._id },
+      { ...wordInfo, userId: user._id },
       { upsert: true, new: true }
     );
 
@@ -162,6 +166,47 @@ bot.command("my_profile", async (ctx) => {
     console.error("Error in my_profile command:", error);
     await ctx.reply(
       "Sorry, there was an error fetching your profile. Please try again."
+    );
+  }
+});
+
+// Get text content from URL
+async function getTextFromUrl(url) {
+  try {
+    const response = await axios.get(url);
+    const html = response.data;
+    // Simple HTML to text conversion
+    const text = html
+      .replace(/<script[^>]*>([\S\s]*?)<\/script>/gim, "")
+      .replace(/<style[^>]*>([\S\s]*?)<\/style>/gim, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text;
+  } catch (error) {
+    console.error("Error fetching URL content:", error);
+    throw error;
+  }
+}
+
+// News command
+bot.command("news", async (ctx) => {
+  try {
+    const url = ctx.message.text.split(" ")[1];
+    console.log({ url });
+    if (!url) {
+      return ctx.replyWithMarkdownV2(
+        "*Please provide a URL to analyze\\!*\nExample: /news https://example.com"
+      );
+    }
+
+    const textContent = await getTextFromUrl(url);
+    const wordPairs = await analyzeWordPairs(textContent);
+    await ctx.replyWithMarkdownV2(formatWordPairs(wordPairs.wordPairs));
+  } catch (error) {
+    console.error("Error in news command:", error);
+    await ctx.reply(
+      "Sorry, there was an error analyzing the content. Please try again."
     );
   }
 });

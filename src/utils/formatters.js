@@ -88,3 +88,25 @@ ${words
   .join("\n")}
 `;
 }
+
+export function formatWordPairs(wordPairs) {
+  if (wordPairs.length === 0) {
+    return "*No word pairs found\\!*";
+  }
+
+  return `
+*Word Pairs Analysis*
+\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-
+${wordPairs
+  .map(
+    (pair, idx) => `
+${idx + 1}\\. *${escapeMarkdown(pair.pair)}*
+🇬🇧: ${escapeMarkdown(pair.definition)}
+🇻🇳: ${escapeMarkdown(pair.vietnameseDefinition)}
+*Example*: ${escapeMarkdown(pair.example)}
+  ↳ ${escapeMarkdown(pair.vietnameseExample)}
+`
+  )
+  .join("\n")}
+`;
+}
