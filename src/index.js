@@ -18,6 +18,7 @@ import {
   formatWordList,
   formatWordPairs,
 } from "./utils/formatters.js";
+import VocabularyBank from "./models/VocabularyBank.js";
 
 dotenv.config();
 
@@ -71,21 +72,31 @@ bot.command("new_word", async (ctx) => {
   try {
     const user = await User.findOne({ telegramId: ctx.from.id });
 
-    // Retrieve the list of learned words
+    // Get learned words
     const learnedWords = await Word.find({
       _id: { $in: user.wordsLearned },
     }).select("word");
 
-    // Use geminiService to generate a random word, excluding learned words
-    const randomWord = await generateRandomWord(
-      learnedWords.map((w) => w.word)
-    );
+    // Get random word from VocabularyBank excluding learned words
+    const randomVocab = await VocabularyBank.aggregate([
+      { 
+        $match: { 
+          isActive: true,
+          word: { $nin: learnedWords.map(w => w.word) } 
+        } 
+      },
+      { $sample: { size: 1 } }
+    ]);
+    
+    if (!randomVocab || randomVocab.length === 0) {
+      return ctx.reply("You have learned all available words! Please wait for new words to be added.");
+    }
 
-    console.log("randomWord", randomWord);
-    console.log("learnedWords", learnedWords);
+    const selectedWord = randomVocab[0];
 
-    const wordInfo = await generateWordInfo(randomWord);
-    console.log("wordInfo", wordInfo);
+    // Generate detailed word info using Gemini
+    const wordInfo = await generateWordInfo(selectedWord.word);
+    
     const word = await Word.findOneAndUpdate(
       { word: wordInfo.word.toLowerCase(), userId: user._id },
       { ...wordInfo, userId: user._id },
